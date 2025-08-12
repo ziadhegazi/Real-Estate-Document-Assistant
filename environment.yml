@@ -1,0 +1,15 @@
+name: real_estate_env
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - flask
+      - langchain
+      - langchain_community
+      - sentence-transformers
+      - chromadb
+      - pypdf
+      - python-dotenv
+      - -e .

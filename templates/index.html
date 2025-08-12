@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate RAG Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-4">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Real Estate Document Assistant 🏡</h1>
+        <div id="chat-window" class="h-96 overflow-y-auto mb-4 p-4 border rounded-lg bg-gray-50 flex flex-col space-y-4">
+            <!-- Chat messages will be dynamically added here -->
+            <div class="flex justify-start">
+                <div class="bg-blue-100 text-blue-800 p-3 rounded-lg max-w-xs">
+                    Hello! I'm your Real Estate RAG Assistant. Ask me anything about the documents I've been trained on.
+                </div>
+            </div>
+        </div>
+        <form id="chat-form" class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+            <input type="text" id="user-input" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask a question about real estate documents..." required>
+            <button type="submit" class="bg-blue-600 text-white font-medium p-3 rounded-lg shadow-md hover:bg-blue-700 transition duration-300 ease-in-out">
+                Send
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            // Add user's message to the chat window
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'flex justify-end';
+            userMessageDiv.innerHTML = `<div class="bg-blue-600 text-white p-3 rounded-lg max-w-xs">${query}</div>`;
+            chatWindow.appendChild(userMessageDiv);
+
+            // Add a loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'flex justify-start';
+            loadingDiv.innerHTML = `<div class="bg-gray-200 text-gray-800 p-3 rounded-lg max-w-xs animate-pulse">Thinking...</div>`;
+            chatWindow.appendChild(loadingDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            userInput.value = '';
+
+            try {
+                // Send the query to the server
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                
+                // Remove the loading message
+                chatWindow.removeChild(loadingDiv);
+
+                // Add the bot's response to the chat window
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.className = 'flex justify-start';
+                botMessageDiv.innerHTML = `<div class="bg-gray-200 text-gray-800 p-3 rounded-lg max-w-xs">${data.response}</div>`;
+                chatWindow.appendChild(botMessageDiv);
+
+                // Scroll to the bottom
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            } catch (error) {
+                console.error('Error:', error);
+                // Handle the error gracefully in the UI
+                chatWindow.removeChild(loadingDiv);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'flex justify-start';
+                errorDiv.innerHTML = `<div class="bg-red-200 text-red-800 p-3 rounded-lg max-w-xs">An error occurred. Please try again.</div>`;
+                chatWindow.appendChild(errorDiv);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
