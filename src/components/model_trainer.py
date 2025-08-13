@@ -1,12 +1,14 @@
 """
-In here we train the model
+In here we load the data andtrain the model
 """
 
 import os
+import sys
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 from typing import List
+from src.exception import CustomException
 
 # A simple logger for the file
 from src.logger import get_logger
@@ -40,8 +42,7 @@ def setup_vector_store(chunks: List[Document], persist_directory: str) -> Chroma
         logger.info(f"Vector store created and saved to '{persist_directory}'.")
         return vector_store
     except Exception as e:
-        logger.error(f"An error occurred while setting up the vector store: {e}")
-        raise
+        raise CustomException(e, sys) from e
 
 def load_vector_store(persist_directory: str) -> Chroma:
     """
@@ -65,8 +66,7 @@ def load_vector_store(persist_directory: str) -> Chroma:
         logger.info(f"Vector store loaded from '{persist_directory}'.")
         return vector_store
     except Exception as e:
-        logger.error(f"An error occurred while loading the vector store: {e}")
-        raise
+        raise CustomException(e, sys) from e
 
 if __name__ == '__main__':
     # Example usage for testing the module
@@ -79,9 +79,11 @@ if __name__ == '__main__':
     persist_dir = os.path.join(project_root, 'db')
     
     # Run the full process for demonstration
-    if os.path.exists(sample_pdf_path):
-        documents = load_documents_from_pdf(sample_pdf_path)
-        chunks = chunk_documents(documents)
-        vector_store = setup_vector_store(chunks, persist_dir)
-        # You can now load it back
-        loaded_vector_store = load_vector_store(persist_dir)
+    try:
+        if os.path.exists(sample_pdf_path):
+            documents = load_documents_from_pdf(sample_pdf_path)
+            chunks = chunk_documents(documents)
+            vector_store = setup_vector_store(chunks, persist_dir)
+            loaded_vector_store = load_vector_store(persist_dir)
+    except CustomException as e:
+        logger.error(f"Error during model training: {e}")

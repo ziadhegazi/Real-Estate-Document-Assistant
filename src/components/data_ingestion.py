@@ -3,9 +3,11 @@ Reading the data from a database/ file path
 """
 
 import os
+import sys
 from langchain_community.document_loaders import PyPDFLoader
 from typing import List
 from langchain.docstore.document import Document
+from src.exception import CustomException
 
 # A simple logger for the file
 from src.logger import get_logger
@@ -32,8 +34,7 @@ def load_documents_from_pdf(pdf_path: str) -> List[Document]:
         logger.info(f"Successfully loaded {len(documents)} pages from '{pdf_path}'.")
         return documents
     except Exception as e:
-        logger.error(f"An error occurred while loading the PDF: {e}")
-        raise
+        raise CustomException(e, sys) from e
 
 if __name__ == '__main__':
     # Example usage (assuming a 'data' folder with 'sample.pdf')
@@ -53,5 +54,5 @@ if __name__ == '__main__':
         loaded_docs = load_documents_from_pdf(sample_pdf_path)
         # Process the documents here if needed
         # For a full pipeline, you would pass these to the next step
-    except FileNotFoundError:
-        pass # The warning message is already printed
+    except CustomException as e:
+        logger.error(f"Error during data ingestion: {e}")

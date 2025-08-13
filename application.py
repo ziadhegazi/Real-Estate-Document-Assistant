@@ -1,9 +1,11 @@
 import os
 import requests
 import json
+import sys
 from flask import Flask, render_template, request, jsonify
 from src.pipeline.predict_pipeline import get_rag_response
 from src.components.model_trainer import load_vector_store
+from src.exception import CustomException
 from src.logger import get_logger
 from dotenv import load_dotenv
 import threading
@@ -100,10 +102,8 @@ def chat():
         return jsonify({"response": "Please enter a question."})
 
     try:
-        # Get context from the vector store
         context, docs = get_rag_response(user_query, vector_store)
         
-        # Craft a prompt for the LLM
         prompt = f"""
             You are a helpful real estate assistant. Use the following context to answer the user's question. 
             If the answer is not in the context, say "I'm sorry, I cannot answer this question based on the provided documents."
@@ -117,17 +117,18 @@ def chat():
             Answer:
         """
         
-        # Get the final response from the LLM
         final_response = get_gemini_response(prompt)
         
         return jsonify({"response": final_response})
     
+    except CustomException as e:
+        logger.error(f"A custom exception occurred: {e}")
+        return jsonify({"response": "An internal server error occurred. Please check the logs."})
     except Exception as e:
         logger.error(f"An error occurred during chat processing: {e}")
         return jsonify({"response": "An internal server error occurred. Please check the logs."})
 
 if __name__ == '__main__':
-    # Check if the vector store exists before running the app
     if not os.path.exists(persist_dir):
         logger.warning(f"Vector store not found at '{persist_dir}'. Please run 'train_pipeline.py' to create it.")
         print("\n*** IMPORTANT ***")

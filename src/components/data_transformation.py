@@ -2,9 +2,11 @@
 Handling the data and transforming it
 """
 
+import sys
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from typing import List
 from langchain.docstore.document import Document
+from src.exception import CustomException
 
 # A simple logger for the file
 from src.logger import get_logger
@@ -32,8 +34,7 @@ def chunk_documents(documents: List[Document], chunk_size: int = 1000, chunk_ove
         logger.info(f"Split {len(documents)} documents into {len(chunks)} chunks.")
         return chunks
     except Exception as e:
-        logger.error(f"An error occurred during document chunking: {e}")
-        raise
+        raise CustomException(e, sys) from e
 
 if __name__ == '__main__':
     # Example usage for testing the module independently
@@ -54,5 +55,5 @@ if __name__ == '__main__':
                 logger.info(f"First chunk content: {chunks[0].page_content[:200]}...")
             else:
                 logger.warning("No documents to chunk. Please ensure the PDF is not empty.")
-    except FileNotFoundError:
-        pass # The error is already handled in data_ingestion
+    except CustomException as e:
+        logger.error(f"Error during data transformation: {e}")
